@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Открытка со стихотворением</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+            font-family: 'Cormorant Garamond', serif;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: rgba(10, 10, 20, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5),
+                        0 0 0 1px rgba(255, 215, 0, 0.1),
+                        inset 0 0 20px rgba(0, 0, 0, 0.3);
+            padding: 50px 40px;
+            max-width: 700px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 215, 0, 0.4), 
+                transparent);
+        }
+
+        .poem-title {
+            color: #e6d5b8;
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2em;
+            margin-bottom: 40px;
+            text-align: center;
+            opacity: 0;
+            animation: fadeIn 1s ease-out 0.5s forwards;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(230, 213, 184, 0.3);
+        }
+
+        .poem-author {
+            color: #b8a98f;
+            font-size: 1.3em;
+            text-align: center;
+            margin-bottom: 50px;
+            opacity: 0;
+            animation: fadeIn 1s ease-out 1s forwards;
+            font-style: italic;
+        }
+
+        .poem-text {
+            color: #f0e6d2;
+            font-size: 1.5em;
+            line-height: 1.8;
+            text-align: center;
+            position: relative;
+            padding: 20px 0;
+            min-height: 400px; /* Фиксированная высота для предотвращения скачков */
+        }
+
+        .line {
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            margin: 0;
+            white-space: nowrap;
+            transition: opacity 0.3s ease;
+        }
+
+        .line.active {
+            opacity: 1;
+            height: auto;
+            min-height: 1.5em;
+            margin-bottom: 25px;
+            white-space: nowrap;
+            overflow: hidden;
+            border-right: 2px solid rgba(255, 215, 0, 0.8);
+            animation: blinkCursor 0.7s infinite;
+        }
+
+        .line.completed {
+            opacity: 1;
+            height: auto;
+            min-height: 1.5em;
+            margin-bottom: 25px;
+            border-right: 2px solid transparent;
+            animation: none;
+        }
+
+        .line:last-child {
+            margin-bottom: 0;
+        }
+
+        .empty-line {
+            height: 1.5em;
+            margin-bottom: 25px;
+        }
+
+        @keyframes blinkCursor {
+            0%, 100% { border-right-color: rgba(255, 215, 0, 0.8); }
+            50% { border-right-color: transparent; }
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .decoration {
+            position: absolute;
+            opacity: 0.1;
+            font-size: 3em;
+            color: #e6d5b8;
+        }
+
+        .top-left {
+            top: 20px;
+            left: 20px;
+        }
+
+        .bottom-right {
+            bottom: 20px;
+            right: 20px;
+            transform: rotate(180deg);
+        }
+
+        .signature {
+            color: #b8a98f;
+            text-align: right;
+            margin-top: 40px;
+            font-style: italic;
+            opacity: 0;
+            font-size: 1.2em;
+        }
+
+        .signature.show {
+            animation: fadeIn 1s ease-out forwards;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                padding: 30px 20px;
+            }
+            
+            .poem-title {
+                font-size: 1.8em;
+            }
+            
+            .poem-text {
+                font-size: 1.3em;
+                min-height: 350px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="decoration top-left">❧</div>
+        <div class="decoration bottom-right">❧</div>
+        
+        <h1 class="poem-title">Ноктюрн</h1>
+        <div class="poem-author">Фёдор Тютчев</div>
+        
+        <div class="poem-text" id="poemContainer">
+            <!-- Строки будут добавлены через JavaScript -->
+        </div>
+        
+        <div class="signature" id="signature">С наилучшими пожеланиями</div>
+    </div>
+
+    <script>
+        // Текст стихотворения - каждая строка отдельный элемент массива
+        const poemLines = [
+            "В тихом сумраке ночном,",
+            "Под мерцаньем звезд густым,",
+            "Мир затих, погруженный в сон,",
+            "Лишь душа не спит одним.",
+            "",
+            "Тихо шепчутся листы,",
+            "Блещет месяц серебром,",
+            "И летят мои мечты",
+            "В этот таинственный покой.",
+            "",
+            "Всё затихло... Тишина...",
+            "Лишь в душе моей одной",
+            "Отзыв вечного слышна,",
+            "Отголосок неземной."
+        ];
+
+        const poemContainer = document.getElementById('poemContainer');
+        const signature = document.getElementById('signature');
+        
+        // Конфигурация печати
+        const typingSpeed = 80; // скорость печати (мс на символ)
+        const lineDelay = 500; // задержка между строками (мс)
+        
+        // Создаем элементы для каждой строки
+        poemLines.forEach((lineText, index) => {
+            const lineElement = document.createElement('div');
+            
+            if (lineText.trim() === '') {
+                lineElement.className = 'empty-line';
+            } else {
+                lineElement.className = 'line';
+                lineElement.textContent = lineText;
+                lineElement.dataset.text = lineText; // сохраняем исходный текст
+                lineElement.textContent = ''; // очищаем для эффекта печати
+            }
+            
+            poemContainer.appendChild(lineElement);
+        });
+
+        // Получаем все строки после добавления в DOM
+        const lines = document.querySelectorAll('.line:not(.empty-line)');
+        let currentLineIndex = 0;
+        let isTyping = false;
+
+        // Функция для печати одной строки
+        function typeLine(lineElement) {
+            return new Promise((resolve) => {
+                const originalText = lineElement.dataset.text;
+                let charIndex = 0;
+                
+                // Показываем строку и добавляем курсор
+                lineElement.classList.add('active');
+                
+                function typeCharacter() {
+                    if (charIndex < originalText.length) {
+                        lineElement.textContent += originalText.charAt(charIndex);
+                        charIndex++;
+                        setTimeout(typeCharacter, typingSpeed);
+                    } else {
+                        // Завершаем строку
+                        lineElement.classList.remove('active');
+                        lineElement.classList.add('completed');
+                        setTimeout(resolve, lineDelay);
+                    }
+                }
+                
+                // Начинаем печатать
+                setTimeout(typeCharacter, 100);
+            });
+        }
+
+        // Основная функция печати стихотворения
+        async function typePoem() {
+            isTyping = true;
+            
+            for (let i = 0; i < lines.length; i++) {
+                currentLineIndex = i;
+                await typeLine(lines[i]);
+            }
+            
+            // После завершения печати всего стихотворения показываем подпись
+            signature.classList.add('show');
+            isTyping = false;
+        }
+
+        // Запускаем печать стихотворения после небольшой задержки
+        setTimeout(() => {
+            typePoem();
+        }, 1500); // Задержка перед началом печати
+        
+        // Добавляем эффект мерцания для готовых строк
+        setInterval(() => {
+            if (!isTyping) {
+                const completedLines = document.querySelectorAll('.line.completed');
+                completedLines.forEach(line => {
+                    if (Math.random() > 0.8) {
+                        line.style.textShadow = '0 0 8px rgba(255, 255, 200, 0.5)';
+                        setTimeout(() => {
+                            line.style.textShadow = 'none';
+                        }, 300);
+                    }
+                });
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
